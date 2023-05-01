@@ -1,12 +1,14 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
-	"github.com/rafteodoro/bookings/pkg/config"
-	"github.com/rafteodoro/bookings/pkg/models"
-	"github.com/rafteodoro/bookings/pkg/render"
+	"github.com/rafteodoro/bookings/internal/config"
+	"github.com/rafteodoro/bookings/internal/models"
+	"github.com/rafteodoro/bookings/internal/render"
 )
 
 // Repo is the repository used by the handlers
@@ -31,7 +33,7 @@ func NewHandlers(r *Repository) {
 
 func (m *Repository) Home(w http.ResponseWriter, r *http.Request) {
 	remoteIP := r.RemoteAddr
-	m.App.Session.Put(r.Context(), "remote_ip",remoteIP)
+	m.App.Session.Put(r.Context(), "remote_ip", remoteIP)
 
 	render.RenderTemplate(w, r, "home.page.tmpl", &models.TemplateData{})
 }
@@ -43,7 +45,6 @@ func (m *Repository) About(w http.ResponseWriter, r *http.Request) {
 
 	remoteIP := m.App.Session.GetString(r.Context(), "remote_ip")
 
-	
 	stringMap["remote_ip"] = remoteIP
 
 	render.RenderTemplate(w, r, "about.page.tmpl", &models.TemplateData{
@@ -80,8 +81,28 @@ func (m *Repository) PostAvailability(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(fmt.Sprintf("Start date is %s and end date is %s", start, end)))
 }
 
+type jsonResponse struct {
+	OK      bool   `json:"ok"`
+	Message string `json:"message"`
+}
+
+// AvailabilityJSON handles request for availability and send JSON response
+func (m *Repository) AvailabilityJSON(w http.ResponseWriter, r *http.Request) {
+	resp := jsonResponse{
+		OK: true,
+		Message: "Available!",
+	}
+
+	out, err := json.MarshalIndent(resp, "", "     ")
+	if err != nil {
+		log.Println(err)
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(out)
+}
+
 // Contact renders the contact page
 func (m *Repository) Contact(w http.ResponseWriter, r *http.Request) {
 	render.RenderTemplate(w, r, "contact.page.tmpl", &models.TemplateData{})
 }
-

@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 	"log"
-	"github.com/rafteodoro/bookings/pkg/config"
-	"github.com/rafteodoro/bookings/pkg/handlers"
-	"github.com/rafteodoro/bookings/pkg/render"
+	"github.com/rafteodoro/bookings/internal/config"
+	"github.com/rafteodoro/bookings/internal/handlers"
+	"github.com/rafteodoro/bookings/internal/render"
 	"net/http"
 	"time"
 
