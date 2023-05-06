@@ -13,6 +13,7 @@ import (
 	"github.com/rafteodoro/bookings/internal/helpers"
 	"github.com/rafteodoro/bookings/internal/models"
 	"github.com/rafteodoro/bookings/internal/render"
+	"github.com/rafteodoro/bookings/internal/driver"
 
 	"github.com/alexedwards/scs/v2"
 )
@@ -26,10 +27,11 @@ var errorLog *log.Logger
 
 // main is the main application function
 func main() {
-	err := run()
+	db, err := run()
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer db.SQL.Close()
 
 	fmt.Printf("Starting application on port %s", portNumber)
 
@@ -43,8 +45,11 @@ func main() {
 
 }
 
-func run() error {
+func run() (*driver.DB, error) {
 	gob.Register(models.Reservation{})
+	gob.Register(models.User{})
+	gob.Register(models.Room{})
+	gob.Register(models.Restriction{})
 
 	//change this to true when in production
 	app.InProduction = false
@@ -63,19 +68,27 @@ func run() error {
 
 	app.Session = session
 
+	// connect to database
+	log.Println("Connecting to database...")
+	db, err := driver.ConnectSQL("host=localhost port=5432 dbname=bookings user=postgres password=golang")
+	if err != nil {
+		log.Fatal("Cannot connect to the database!")
+	}
+	log.Println("Connected to database")
+
 	tc, err := render.CreateTemplateCache()
 	if err != nil {
 		log.Fatal(("cannot create template cache"))
-		return err
+		return nil, err
 	}
 
 	app.TemplateCache = tc
 	app.UseCache = false
 
-	repo := handlers.NewRepo(&app)
+	repo := handlers.NewRepo(&app, db)
 	handlers.NewHandlers(repo)
-	render.NewTemplates(&app)
+	render.NewRenderer(&app)
 	helpers.NewHelpers(&app)
 
-	return nil
+	return db, nil
 }
