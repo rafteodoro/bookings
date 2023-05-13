@@ -157,7 +157,7 @@ func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
-	
+
 	// send notifications - first to guest
 	htmlMessage := fmt.Sprintf(`
 		<strong>Reservation Confirmation</strong><br>
@@ -165,11 +165,11 @@ func (m *Repository) PostReservation(w http.ResponseWriter, r *http.Request) {
 		This is to confirm your reservation from %s to %s.
 
 	`, reservation.FirstName, reservation.StartDate.Format("2006-01-02"), reservation.EndDate.Format("2006-01-02"))
-	msg := models.MailData {
-		To: reservation.Email,
-		From: "b&b@fortsmythe.com",
-		Subject: "Reservation Confirmation",
-		Content: htmlMessage,
+	msg := models.MailData{
+		To:       reservation.Email,
+		From:     "b&b@fortsmythe.com",
+		Subject:  "Reservation Confirmation",
+		Content:  htmlMessage,
 		Template: "basic.html",
 	}
 
@@ -382,13 +382,12 @@ func (m *Repository) BookRoom(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// ShowLogin
+// ShowLogin shows the login screen
 func (m *Repository) ShowLogin(w http.ResponseWriter, r *http.Request) {
 	render.Template(w, r, "login.page.tmpl", &models.TemplateData{
 		Form: forms.New(nil),
 	})
 }
-
 
 // PostShowLogin handles logging the user in
 func (m *Repository) PostShowLogin(w http.ResponseWriter, r *http.Request) {
@@ -420,7 +419,6 @@ func (m *Repository) PostShowLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	
 	m.App.Session.Put(r.Context(), "user_id", id)
 	m.App.Session.Put(r.Context(), "flash", "Logged in succesfully")
 	http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -436,5 +434,40 @@ func (m *Repository) Logout(w http.ResponseWriter, r *http.Request) {
 
 // AdminDashboard
 func (m *Repository) AdminDashboard(w http.ResponseWriter, r *http.Request) {
+
 	render.Template(w, r, "admin-dashboard.page.tmpl", &models.TemplateData{})
+}
+
+// AdminAllReservations shows all information in admin tool
+func (m *Repository) AdminAllReservations(w http.ResponseWriter, r *http.Request) {
+	reservations, err := m.DB.AllReservations()
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	data := make(map[string]interface{})
+	data["reservations"] = reservations
+	render.Template(w, r, "admin-all-reservations.page.tmpl", &models.TemplateData{
+		Data: data,
+	})
+}
+
+// AdminNewReservations shows all new reservations in admin tool
+func (m *Repository) AdminNewReservations(w http.ResponseWriter, r *http.Request) {
+	reservations, err := m.DB.AllNewReservations()
+	if err != nil {
+		helpers.ServerError(w, err)
+		return
+	}
+
+	data := make(map[string]interface{})
+	data["reservations"] = reservations
+	render.Template(w, r, "admin-new-reservations.page.tmpl", &models.TemplateData{
+		Data: data,
+	})
+}
+
+func (m *Repository) AdminReservationsCalendar(w http.ResponseWriter, r *http.Request) {
+	render.Template(w, r, "admin-reservations-calendar.page.tmpl", &models.TemplateData{})
 }
